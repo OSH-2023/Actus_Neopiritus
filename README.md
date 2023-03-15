@@ -1,9 +1,12 @@
-# niubi_proj——OSH-2023 大作业项目
+---
+title: Beer —— OSH-2023 
+author: \{ 舒英特[^1],陈骆鑫[^1],顾芃坤[^2],徐翊然[^1],张学涵[^1] \}
+date: today
+---
 
-小组成员:
 
-- 舒英特 PB21111704
-- 张学涵 PB21000079
-- 顾芃坤 PB18000062
-- 徐翊然 PB21000193
-- 陈骆鑫 PB21000039
+# Beer
+### ——OSH-2023 大作业项目
+
+[^1]: Department of Computer Science, USTC
+[^2]: Department of Mathematics, USTC
