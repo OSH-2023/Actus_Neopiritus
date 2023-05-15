@@ -1,0 +1,7 @@
+arceos/target
+/.vscode
+arceos/.DS_Store
+arceos/*.asm
+arceos/*.img
+arceos/actual.out
+arceos/qemu.log
