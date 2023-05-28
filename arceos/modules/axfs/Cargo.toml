@@ -35,6 +35,7 @@ axfs_ramfs = { path = "../../crates/axfs_ramfs", optional = true }
 axdriver = { path = "../axdriver", optional = true }
 axsync = { path = "../axsync", default-features = false }
 crate_interface = { path = "../../crates/crate_interface", optional = true }
+ext2 = { git = "https://github.com/GreenDay03/ext2-rs.git" }
 
 [dependencies.fatfs]
 git = "https://github.com/rafalh/rust-fatfs"
