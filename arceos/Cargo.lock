@@ -3,6 +3,16 @@
 version = 3
 
 [[package]]
+name = "TEST"
+version = "0.1.0"
+dependencies = [
+ "axfs",
+ "axio",
+ "axtask",
+ "driver_block",
+]
+
+[[package]]
 name = "aarch64-cpu"
 version = "9.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
