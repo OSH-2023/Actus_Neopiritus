@@ -28,7 +28,9 @@ members = [
     "crates/driver_common",
     "crates/driver_display",
     "crates/driver_net",
+    "crates/driver_pci",
     "crates/driver_virtio",
+    "crates/flatten_objects",
     "crates/handler_table",
     "crates/kernel_guard",
     "crates/lazy_init",
@@ -44,6 +46,8 @@ members = [
     "crates/spinlock",
     "crates/timer_list",
     "crates/tuple_for_each",
+    "crates/fs_utils",
+    "crates/ext2fs",
 
     "modules/axalloc",
     "modules/axconfig",
@@ -56,7 +60,6 @@ members = [
     "modules/axruntime",
     "modules/axsync",
     "modules/axtask",
-    "modules/TEST",
 
     "ulib/libax",
 ]
