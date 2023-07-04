@@ -67,7 +67,7 @@ platform-pc-x86 = ["axhal/platform-pc-x86", "bus-pci"]
 platform-qemu-virt-riscv = ["axhal/platform-qemu-virt-riscv", "bus-mmio"]
 platform-qemu-virt-aarch64 = ["axhal/platform-qemu-virt-aarch64", "bus-mmio"]
 
-default = ["axtask?/sched_fifo"]
+default = ["axtask?/sched_mlfq"]
 
 [dependencies]
 spin = { version = "0.9", optional = true }

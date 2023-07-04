@@ -5,6 +5,7 @@
 //! - [`FifoScheduler`]: FIFO (First-In-First-Out) scheduler (cooperative).
 //! - [`RRScheduler`]: Round-robin scheduler (preemptive).
 //! - [`CFScheduler`]: Completely Fair Scheduler (preemptive).
+//! - [`MLFQScheduler`]: Multi-Level Feedback Queue Scheduler (preemptive).
 
 #![cfg_attr(not(test), no_std)]
 #![feature(const_mut_refs)]

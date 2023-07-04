@@ -4,93 +4,121 @@ use core::ops::Deref;
 
 use crate::BaseScheduler;
 
-pub struct MLFQTask<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> {
+/// A task wrapper for the [`MLFQScheduler`].
+///
+/// It add a priority for scheduling between levels.
+/// It add a time slice counter to use in round-robin scheduling within level.
+pub struct MLFQTask<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize> {
     inner: T,
-    prio: AtomicIsize, // 注意值越大优先级越低，每增加 1 相对应的时间片数乘以 2。
-    remain_ticks: AtomicIsize,
+    priority: AtomicIsize,
+    remain_time: AtomicIsize,
 }
 
-impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> MLFQTask<T, QNUM, BASETICK, RESETTICK> {
+impl<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize> MLFQTask<T, LEVEL_NUM, BASE_TIME, RESET_TIME> {
+    /// Creates a new [`MLFQTask`] from the inner task struct.
     pub const fn new(inner: T) -> Self {
         Self {
             inner,
-            prio: AtomicIsize::new(0 as isize),
-            remain_ticks: AtomicIsize::new(BASETICK as isize),
+            priority: AtomicIsize::new(0 as isize), // Rule 3: new job is placed at the highest priority
+            remain_time: AtomicIsize::new(BASE_TIME as isize),
         }
     }
 
+    /// Load task priority
     pub fn get_prio(&self) -> isize {
-        self.prio.load(Ordering::Acquire)
+        self.priority.load(Ordering::Acquire)
     }
     
+    /// Sub remain time by 1, used when time tick
     pub fn tick(&self) -> isize {
-        self.remain_ticks.fetch_sub(1, Ordering::Release)
+        self.remain_time.fetch_sub(1, Ordering::Release)
     }
 
+    /// Load remain time tick
     pub fn get_remain(&self) -> isize {
-        self.remain_ticks.load(Ordering::Acquire)
+        self.remain_time.load(Ordering::Acquire)
     }
 
-    pub fn reset_ticks(&self) {
-        self.remain_ticks.store((BASETICK as isize) << self.prio.load(Ordering::Acquire), Ordering::Release);
+    /// Reset remain time
+    pub fn reset_time(&self) {
+        self.remain_time.store((BASE_TIME as isize) << self.priority.load(Ordering::Acquire), Ordering::Release);
+        // Rule: higher-priority queues get shorter time slices (they are more likely to be interactive jobs)
     }
 
-    // 所有的任务重置优先级
+    /// Reset priority (Rule 5)
     pub fn reset_prio(&self) {
-        self.prio.store(0, Ordering::Release);
-        self.remain_ticks.store(BASETICK as isize, Ordering::Release);
+        self.priority.store(0, Ordering::Release);
+        self.remain_time.store(BASE_TIME as isize, Ordering::Release);
     }
 
-    // 优先级减一（代码取反了所以是加一，不想用负数），相应设置 remain_ticks。返回的是新的优先级。
-    // 注意处理优先级已经到最低的情况。
-    pub fn prio_promote(&self) -> isize {
-        let mut current_prio = self.prio.fetch_add(1, Ordering::Release) + 1;
-        if current_prio == QNUM as isize {
-            self.prio.store(QNUM as isize - 1, Ordering::Release);
-            current_prio = QNUM as isize - 1;
+    /// Demote priority by 1 (Rule 4)
+    pub fn prio_demote(&self) -> isize {
+        let mut current_prio = self.priority.fetch_add(1, Ordering::Release) + 1;
+        if current_prio == LEVEL_NUM as isize {
+            self.priority.store(LEVEL_NUM as isize - 1, Ordering::Release);
+            current_prio = LEVEL_NUM as isize - 1;
         }
-        self.remain_ticks.store((BASETICK as isize) << current_prio, Ordering::Release);
+        self.remain_time.store((BASE_TIME as isize) << current_prio, Ordering::Release);
         current_prio as isize
     }
 
+    /// Returns a reference to the inner task struct.
     pub const fn inner(&self) -> &T {
         &self.inner
     }
 }
 
-impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> Deref for MLFQTask<T, QNUM, BASETICK, RESETTICK> {
+impl<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize> Deref for MLFQTask<T, LEVEL_NUM, BASE_TIME, RESET_TIME> {
     type Target = T;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-/// 含义分别是：队列个数，基础时间片的滴答数，重置时间片数
-pub struct MLFQScheduler<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> {
-    ready_queue: Vec<VecDeque<Arc<MLFQTask<T, QNUM, BASETICK, RESETTICK>>>>,
+/// A simple Multi-Level Feedback Queue (MLFQ) preemptive scheduler.
+///
+/// Same as [`RRScheduler`], it uses [`VecDeque`] as the ready queue. So it may
+/// take O(n) time to remove a task from the ready queue.
+/// 
+/// Main Reference: [`WISC`]
+/// 
+/// Five Rules:
+/// - Rule 1: If Priority(A) > Priority(B), A runs (B doesn’t).
+/// - Rule 2: If Priority(A) = Priority(B), A & B run in round-robin fashion using the time slice (quantum length) of the given queue.
+/// - Rule 3: When a job enters the system, it is placed at the highest priority (the topmost queue).
+/// - Rule 4: Once a job uses up its time allotment at a given level, its priority is reduced (i.e., it moves down one queue).
+/// - Rule 5: After some time period S, move all the jobs in the systemto the topmost queue.
+/// 
+/// [`WISC`]: https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched-mlfq.pdf
+/// [`RRScheduler`]: crate::RRScheduler
+pub struct MLFQScheduler<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize> {
+    ready_queue: Vec<VecDeque<Arc<MLFQTask<T, LEVEL_NUM, BASE_TIME, RESET_TIME>>>>,
     reset_remain_ticks: AtomicIsize,
 }
 
-impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> MLFQScheduler<T, QNUM, BASETICK, RESETTICK> {
+impl<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize> MLFQScheduler<T, LEVEL_NUM, BASE_TIME, RESET_TIME> {
+    /// Creates a new empty [`MLFQScheduler`].
     pub fn new() -> Self {
-        assert!(QNUM > 0);
+        assert!(LEVEL_NUM > 0);
         let mut ready_queue = Vec::new();
-        for _i in 0..QNUM {
+        for _i in 0..LEVEL_NUM {
             ready_queue.push(VecDeque::new());
         }
         Self {
             ready_queue,
-            reset_remain_ticks: AtomicIsize::new(RESETTICK as isize),
+            reset_remain_ticks: AtomicIsize::new(RESET_TIME as isize),
         }
     }
 
+    /// get the name of scheduler
     pub fn scheduler_name() ->  &'static str{
         "Multi-Level Feedback Queue Scheduler"
     }
 }
 
-impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> BaseScheduler for MLFQScheduler<T, QNUM, BASETICK, RESETTICK> {
-    type SchedItem = Arc<MLFQTask<T, QNUM, BASETICK, RESETTICK>>;
+impl<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize> BaseScheduler for MLFQScheduler<T, LEVEL_NUM, BASE_TIME, RESET_TIME> {
+    type SchedItem = Arc<MLFQTask<T, LEVEL_NUM, BASE_TIME, RESET_TIME>>;
 
     fn init(&mut self) {}
 
@@ -106,9 +134,10 @@ impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> BaseSc
     }
 
     fn pick_next_task(&mut self) -> Option<Self::SchedItem> {
+        // Rule 1: If Priority(A) > Priority(B), A runs (B doesn’t).
+        // Rule 2: If Priority(A) = Priority(B), A & B run in round-robin fashion using the time slice (quantum length) of the given queue.
         for i in 0..self.ready_queue.len() {
             if !self.ready_queue[i].is_empty() {
-                //info!("pick: {}", self.ready_queue[i][0].get_prio());
                 return self.ready_queue[i].pop_front();
             }
         }
@@ -116,50 +145,43 @@ impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> BaseSc
     }
 
     fn put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
-        // 这个算法只支持部分的 preempt：处于同优先级内可以给它安排在最前面的，但如果优先级不一样就不太行了。这里的 preempt 沿用了 RR 的写法
+        // Rule 4: Once a job uses up its time allotment at a given level its priority is reduced.
         if Arc::clone(&prev).get_remain() <= 0 {
-            //info!("{}", Arc::clone(&prev).get_prio());
-            prev.prio_promote();
+            prev.prio_demote();
             self.ready_queue[Arc::clone(&prev).get_prio() as usize].push_back(prev);
         } else if preempt {
-            //info!("={}", Arc::clone(&prev).get_prio());
-            prev.reset_ticks();
+            prev.reset_time();
             self.ready_queue[Arc::clone(&prev).get_prio() as usize].push_front(prev);
         } else {
-            //info!("x{}", Arc::clone(&prev).get_prio());
-            prev.reset_ticks();
+            prev.reset_time();
             self.ready_queue[Arc::clone(&prev).get_prio() as usize].push_back(prev);
         }
     }
 
-    fn task_tick(&mut self, _current: &Self::SchedItem) -> bool {
+    fn task_tick(&mut self, current: &Self::SchedItem) -> bool {
+        // Rule 5: After some time period S, move all the jobs in the systemto the topmost queue.
         if self.reset_remain_ticks.fetch_sub(1, Ordering::Release) <= 1 {
-            // 触发重启
-            self.reset_remain_ticks.store(RESETTICK as isize, Ordering::Release);
-            let mut new_queue : VecDeque<Arc<MLFQTask<T, QNUM, BASETICK, RESETTICK>>> = VecDeque::new();
-            // 把所有的任务转移到一个新的 Deque 中
-            for i in 0..QNUM {
-                while !self.ready_queue[i].is_empty() {
-                    new_queue.push_back(self.ready_queue[i].pop_front().unwrap());
+            self.reset_remain_ticks.store(RESET_TIME as isize, Ordering::Release);
+            let mut new_queue : VecDeque<Arc<MLFQTask<T, LEVEL_NUM, BASE_TIME, RESET_TIME>>> = VecDeque::new();
+            for i in 0..LEVEL_NUM {
+                while let Some(item) = self.ready_queue[i].pop_front() {
+                    item.reset_prio();
+                    new_queue.push_back(Arc::clone(&item));
                 }
             }
-            // 重置所有任务的等级和时间片
-            // 把这些任务全部塞回 0 号队列中
-            let _ = new_queue
-                .iter()
-                .map(|item| {
-                    item.reset_prio();
-                    self.ready_queue[0].push_back(Arc::clone(item));
-                });
-            drop(new_queue);
-            // 把在外边流浪的 _current 也重置一下
-            _current.reset_prio();
-            return true; // TODO: 不确定这里的逻辑
+            self.ready_queue[0] = new_queue;
+            for i in 1..LEVEL_NUM {
+                self.ready_queue[i].clear();
+            }
+            current.reset_prio();
+            // need reschedule
+            return true;
         }
-        //info!("tick{}", _current.get_remain());
-        _current.tick() <= 1
+        // need reschedule
+        current.tick() <= 1
     }
 
+    /// User cannot set priority
     fn set_priority(&mut self, _task: &Self::SchedItem, _prio: isize) -> bool {
         false
     }
