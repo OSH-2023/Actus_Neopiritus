@@ -129,6 +129,15 @@ impl<T: ?Sized> Mutex<T> {
         // there's no need to lock the inner mutex.
         unsafe { &mut *self.data.get() }
     }
+
+    /// Returns a mutable pointer to the underlying data.
+    ///
+    /// # Safety
+    /// Can only be used in interrupt handler
+    #[inline(always)]
+    pub fn as_mut_ptr(&self) -> *mut T {
+        self.data.get()
+    }
 }
 
 impl<T: ?Sized + Default> Default for Mutex<T> {
@@ -189,7 +198,7 @@ impl<'a, T: ?Sized> Drop for MutexGuard<'a, T> {
 #[cfg(test)]
 mod tests {
     use crate::Mutex;
-    use axtask as task;
+    use axtask as thread;
     use std::sync::Once;
 
     static INIT: Once = Once::new();
@@ -197,13 +206,13 @@ mod tests {
     fn may_interrupt() {
         // simulate interrupts
         if rand::random::<u32>() % 3 == 0 {
-            task::yield_now();
+            thread::yield_now();
         }
     }
 
     #[test]
     fn lots_and_lots() {
-        INIT.call_once(axtask::init_scheduler);
+        INIT.call_once(thread::init_scheduler);
 
         const NUM_TASKS: u32 = 10;
         const NUM_ITERS: u32 = 10_000;
@@ -220,8 +229,8 @@ mod tests {
         }
 
         for _ in 0..NUM_TASKS {
-            task::spawn(|| inc(1));
-            task::spawn(|| inc(2));
+            thread::spawn(|| inc(1));
+            thread::spawn(|| inc(2));
         }
 
         println!("spawn OK");
