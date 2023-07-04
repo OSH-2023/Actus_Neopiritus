@@ -82,3 +82,4 @@ macro_rules! def_test_sched {
 def_test_sched!(fifo, FifoScheduler::<usize>, FifoTask::<usize>);
 def_test_sched!(rr, RRScheduler::<usize, 5>, RRTask::<usize, 5>);
 def_test_sched!(cfs, CFScheduler::<usize>, CFSTask::<usize>);
+def_test_sched!(mlfq, MLFQScheduler<usize, 8, 1, 10_0000>, MLFQTask<usize, 8, 1, 10_0000>);
