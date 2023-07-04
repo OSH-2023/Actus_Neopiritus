@@ -266,7 +266,7 @@ name = "axfs_vfs"
 version = "0.1.0"
 dependencies = [
  "axerrno",
- "bitflags 2.3.2",
+ "bitflags 2.3.1",
  "log",
 ]
 
@@ -279,7 +279,7 @@ dependencies = [
  "axalloc",
  "axconfig",
  "axlog",
- "bitflags 2.2.1",
+ "bitflags 2.3.1",
  "cfg-if",
  "crate_interface 0.1.1",
  "dtb",

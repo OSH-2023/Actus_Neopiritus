@@ -10,8 +10,8 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use core::time::Duration;
 use libax::sync::{Mutex, WaitQueue};
-use libax::{rand, task};
-use libax::task::{sleep, yield_now};
+use libax::{rand, thread};
+use libax::thread::{sleep, yield_now};
 
 const NUM_DATA_SHORT_1: usize = 50000;
 const NUM_DATA_SHORT_2: usize = 100000;
@@ -110,14 +110,14 @@ fn main() {
             vec = Arc::new(Vec::new());
             datalen = 0;
         }
-        task::spawn(move || {
+        thread::spawn(move || {
             let start_time = libax::time::Instant::now();
             let left = 0;
             let right = datalen;
             println!(
                 "part {}: {:?} [{}, {})",
                 i,
-                task::current().id(),
+                thread::current().id(),
                 left,
                 right
             );
@@ -127,7 +127,7 @@ fn main() {
 
             barrier();
 
-            println!("part {}: {:?} finished", i, task::current().id());
+            println!("part {}: {:?} finished", i, thread::current().id());
             let n = FINISHED_TASKS.fetch_add(1, Ordering::Relaxed);
             if n == PAYLOAD_KIND - 1 {
                 MAIN_WQ.notify_one(true);
