@@ -61,7 +61,7 @@ export MODE
 export LOG
 
 # Binutils
-ifeq ($(APP_LANG), c)   #注释：这些东西都是为C语言而使用的，我们的HelloWorld是Rust语言，可以暂时不管这个东西。
+ifeq ($(APP_LANG), c)
   CROSS_COMPILE ?= $(ARCH)-linux-musl-
   CC := $(CROSS_COMPILE)gcc
   AR := $(CROSS_COMPILE)ar

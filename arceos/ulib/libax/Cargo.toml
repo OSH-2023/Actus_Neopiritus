@@ -66,6 +66,7 @@ log-level-trace = ["axlog/log-level-trace"]
 platform-pc-x86 = ["axhal/platform-pc-x86", "bus-pci"]
 platform-qemu-virt-riscv = ["axhal/platform-qemu-virt-riscv", "bus-mmio"]
 platform-qemu-virt-aarch64 = ["axhal/platform-qemu-virt-aarch64", "bus-mmio"]
+platform-qemu-virt-arm = ["axhal/platform-qemu-virt-arm", "bus-mmio"]
 
 default = ["axtask?/sched_mlfq"]
 

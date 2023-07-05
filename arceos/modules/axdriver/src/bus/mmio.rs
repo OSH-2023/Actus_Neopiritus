@@ -14,7 +14,7 @@ impl AllDevices {
             //todo: get irq_num for riscv
             #[cfg(any(target_arch = "riscv32", target_arch = "riscv64"))]
             let irq_num = None;
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             let irq_num = n
                 .find_prop("interrupts")
                 .map(|irq| gic_irq_translate(irq.u32(0), irq.u32(1)) as usize);
