@@ -46,8 +46,12 @@ else ifeq ($(ARCH), aarch64)
   ACCEL ?= n
   PLATFORM ?= qemu-virt-aarch64
   TARGET := aarch64-unknown-none-softfloat
+else ifeq ($(ARCH), arm)
+  ACCEL ?= n
+  PLATFORM ?= qemu-virt-arm
+  TARGET := armv7a-none-eabi
 else
-  $(error "ARCH" must be one of "x86_64", "riscv64", or "aarch64")
+  $(error "ARCH" must be one of "x86_64", "riscv64", "aarch64", or "arm")
 endif
 
 export ARCH
@@ -57,7 +61,7 @@ export MODE
 export LOG
 
 # Binutils
-ifeq ($(APP_LANG), c)
+ifeq ($(APP_LANG), c)   #注释：这些东西都是为C语言而使用的，我们的HelloWorld是Rust语言，可以暂时不管这个东西。
   CROSS_COMPILE ?= $(ARCH)-linux-musl-
   CC := $(CROSS_COMPILE)gcc
   AR := $(CROSS_COMPILE)ar
