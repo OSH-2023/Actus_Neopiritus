@@ -146,15 +146,17 @@ impl<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize>
 
     fn put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
         // Rule 4: Once a job uses up its time allotment at a given level its priority is reduced.
-        if Arc::clone(&prev).get_remain() <= 0 {
+        let rem = prev.get_remain();
+        let prio = prev.get_prio();
+        if rem <= 0 {
             prev.prio_demote();
-            self.ready_queue[Arc::clone(&prev).get_prio() as usize].push_back(prev);
+            self.ready_queue[prio as usize].push_back(prev);
         } else if preempt {
             prev.reset_time();
-            self.ready_queue[Arc::clone(&prev).get_prio() as usize].push_front(prev);
+            self.ready_queue[prio as usize].push_front(prev);
         } else {
             prev.reset_time();
-            self.ready_queue[Arc::clone(&prev).get_prio() as usize].push_back(prev);
+            self.ready_queue[prio as usize].push_back(prev);
         }
     }
 
