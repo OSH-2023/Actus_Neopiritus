@@ -24,11 +24,11 @@ cfg_if::cfg_if! {
         pub(crate) type AxTask = scheduler::CFSTask<TaskInner>;
         pub(crate) type Scheduler = scheduler::CFScheduler<TaskInner>;
     } else if #[cfg(feature = "sched_mlfq")] {
-        const QNUM: usize = 8;
-        const BASETICK: usize = 1;
-        const RESETTICK: usize = 10_0000;
-        pub(crate) type AxTask = scheduler::MLFQTask<TaskInner, QNUM, BASETICK, RESETTICK>;
-        pub(crate) type Scheduler = scheduler::MLFQScheduler<TaskInner, QNUM, BASETICK, RESETTICK>;
+        const LEVEL_NUM: usize = 8;
+        const BASE_TIME: usize = 1;
+        const RESET_TIME: usize = 10_0000;
+        pub(crate) type AxTask = scheduler::MLFQTask<TaskInner, LEVEL_NUM, BASE_TIME, RESET_TIME>;
+        pub(crate) type Scheduler = scheduler::MLFQScheduler<TaskInner, LEVEL_NUM, BASE_TIME, RESET_TIME>;
     }
 }
 

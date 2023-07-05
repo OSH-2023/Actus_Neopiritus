@@ -7,6 +7,7 @@ edition = "2021"
 
 [features]
 preempt = ["libax/sched_rr"]
+sched_cfs = ["libax/sched_cfs"]
 sched_fifo = ["libax/sched_fifo"]
 sched_rr = ["libax/sched_rr"]
 sched_mlfq = ["libax/sched_mlfq"]
