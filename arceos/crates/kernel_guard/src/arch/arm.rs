@@ -6,7 +6,7 @@ pub fn local_irq_save_and_disable() -> usize {
     unsafe {
         asm!(
             "mrs {0}, cpsr",
-            "orr {1}, {0}, #0x80",
+            "orr {1}, {0}, #0xcc0",
             "msr cpsr_c, {1}",
             out(reg) flags,
             out(reg) _,
