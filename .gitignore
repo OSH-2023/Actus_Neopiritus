@@ -5,3 +5,7 @@ arceos/*.asm
 arceos/*.img
 arceos/actual.out
 arceos/qemu.log
+plan/与架构有关文件
+plan/与架构有关文件.txt
+plan/与架构有关文件未完成.txt
+plan/与架构有关文件
