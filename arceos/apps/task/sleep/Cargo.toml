@@ -9,6 +9,7 @@ authors = ["Yuekai Jia <equation618@gmail.com>"]
 [features]
 preempt = ["libax/sched_rr"]
 default = ["libax/default"]
+sched_mlfq = ["libax/sched_mlfq"]
 
 [dependencies]
 libax = { path = "../../../ulib/libax", default-features = false, features = ["paging", "multitask", "irq"] }

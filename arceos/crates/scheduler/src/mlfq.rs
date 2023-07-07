@@ -150,7 +150,7 @@ impl<T, const LEVEL_NUM: usize, const BASE_TIME: usize, const RESET_TIME: usize>
         let prio = prev.get_prio();
         if rem <= 0 {
             prev.prio_demote();
-            self.ready_queue[prio as usize].push_back(prev);
+            self.ready_queue[prev.get_prio() as usize].push_back(prev);
         } else if preempt {
             prev.reset_time();
             self.ready_queue[prio as usize].push_front(prev);

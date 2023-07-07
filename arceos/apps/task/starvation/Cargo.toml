@@ -1,0 +1,18 @@
+[package]
+name = "starvation"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+preempt = ["libax/sched_rr"]
+sched_cfs = ["libax/sched_cfs"]
+sched_fifo = ["libax/sched_fifo"]
+sched_rr = ["libax/sched_rr"]
+sched_mlfq = ["libax/sched_mlfq"]
+default = ["libax/sched_mlfq"]
+
+
+[dependencies]
+libax = { path = "../../../ulib/libax", default-features = false, features = ["alloc", "paging", "multitask"] }
