@@ -157,7 +157,7 @@ impl A64PTE {
 
 impl GenericPTE for A64PTE {
     fn new_page(paddr: PhysAddr, flags: MappingFlags, is_huge: bool) -> Self {
-        let mut attr = DescriptorAttr::from(flags) | DescriptorAttr::AF;
+        let mut attr: DescriptorAttr = DescriptorAttr::from(flags) | DescriptorAttr::AF;
         if !is_huge {
             attr |= DescriptorAttr::NON_BLOCK;
         }
