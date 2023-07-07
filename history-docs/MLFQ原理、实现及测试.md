@@ -214,3 +214,9 @@
     | CFS      | （与优先级设置有关）2000-15000不等 |
 
   - 可以看到本测试中MLFQ对饥饿控制的较好，但这并不是无代价的，与参数的设置有很大关系。
+
+## 参考资料
+
+1. [进程调度-rCore-Tutorial-Book](https://rcore-os.cn/rCore-Tutorial-Book-v3/chapter5/4scheduling.html)
+2. [Multilevel feedback queue](https://en.wikipedia.org/wiki/Multilevel_feedback_queue)
+3. [Scheduling: The Multi-Level Feedback Queue](https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched-mlfq.pdf)
