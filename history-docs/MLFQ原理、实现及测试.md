@@ -85,7 +85,7 @@
     let prio = prev.get_prio();
     if rem <= 0 {
         prev.prio_demote();
-        self.ready_queue[prio as usize].push_back(prev);
+        self.ready_queue[prev.get_prio() as usize].push_back(prev);
     } else if preempt {
         prev.reset_time();
         self.ready_queue[prio as usize].push_front(prev);
@@ -126,3 +126,91 @@
 
   - 设置当前任务的优先级，并返回是否成功。我们不允许用户手动设置优先级，所以只需一直返回false。
 
+
+
+## 测试
+
+我们对实现的MLFQ调度做简单的测试。
+
+首先，ArceOS为调度器提供了一个基础速度的评测，可以直接使用，测量指标为从调度器中的pick速度和remove速度。对不同调度算法的测试数据如下：
+
+- | 调度算法 | pick速度          | remove速度         |
+  | -------- | ----------------- | ------------------ |
+  | MLFQ     | 61 $ns/task$       | 62.827 $\mu s/task$ |
+  | FIFO     | 44 $ns/task$       | 56 $ns/task$        |
+  | RR       | 28 $ns/task$       | 66.649 $\mu s/task$ |
+  | CFS      | 1.392 $\mu s/task$ | 862 $ns/task$       |
+
+- 可以看到我们实现的MLFQ基础速度上相比RR慢的并不多。
+
+另外，ArceOS已经存在一些基础的测试，稍作修改后就可以直接使用。
+
+- parallel：简单的并行测试
+
+  - 该测试简单地启动16个任务，最后将结果聚在一起并与正确结果比对，用于判断所有任务是否能成功结束，且结果是否正确。
+  - 测试成功
+    ```
+    part 15: TaskId(19) finished
+    part 0: TaskId(4) finished
+    part 1: TaskId(5) finished
+    part 2: TaskId(6) finished
+    part 3: TaskId(7) finished
+    part 4: TaskId(8) finished
+    part 5: TaskId(9) finished
+    part 6: TaskId(10) finished
+    part 7: TaskId(11) finished
+    part 8: TaskId(12) finished
+    part 9: TaskId(13) finished
+    part 10: TaskId(14) finished
+    part 11: TaskId(15) finished
+    part 12: TaskId(16) finished
+    part 13: TaskId(17) finished
+    part 14: TaskId(18) finished
+    sum = 61783189038
+    Parallel summation tests run OK!
+    ```
+
+- priority：优先级测试
+
+  - 在该测试中，存在四个较短的任务，和一个长任务同时运行，且短任务被赋予不同的优先级。由于我们的调度器并不允许手动指定优先级，因此不能进行优先级测试，但该测试可用于观察近似SJF的程度。
+
+  - 我们与已实现的其它算法对比：（时间均以毫秒计算）
+
+    | 调度算法 | Task 0 | Task 1  | Task 2  | Task 3  | Task 4 （长任务） |
+    | -------- | ------ | ------- | ------- | ------- | ----------------- |
+    | **MLFQ** | **68** | **138** | **207** | **277** | **347**           |
+    | RR       | 268    | 287     | 308     | 328     | 347               |
+    | FIFO     | 69     | 139     | 209     | 279     | 348               |
+
+  - 可以看到该例中MLFQ对SJF有较好的近似。（FIFO由于顺序与长短正好相同，调度也与SJF相同）
+
+- 此外还有sleep和yield两个测试，用于测试这两个功能的正确性，我们的调度均通过了测试，在此不再展开。
+
+此外，为了更详细地评测调度算法，我们添加了更多测试：
+
+- realtime：响应时间测试
+
+  - 有四个**交互式**（运行极短时间后主动yield，大量循环）短进程和一个长进程同时运行，判断长进程的运行对短进程的响应时间的影响。
+
+  - 任务的总响应时间如下表：
+
+  - | 调度算法 | Task 0  | Task 1  | Task 2  | Task 3  | Task 4 （长任务） |
+    | -------- | ------- | ------- | ------- | ------- | ----------------- |
+    | **MLFQ** | **402** | **395** | **375** | **190** | **1771**          |
+    | RR       | 1745    | 1736    | 1716    | 1705    | 1680              |
+    | FIFO     | 1744    | 1735    | 1717    | 1706    | 1682              |
+
+  - 这里RR的表现相对并不好，原因是交互式进程**每次**都要等待长进程运行一个时间片；而MLFQ是在没有就绪高优先级任务之后，才运行低优先级任务。
+
+- starvation：饥饿测试
+
+  - 有四个不停止的交互式任务，观察在该情况下长任务完成的用时。
+
+  - | 调度算法 | 长任务完成时间                     |
+    | -------- | ---------------------------------- |
+    | MLFQ     | 1713                               |
+    | RR       | 1691                               |
+    | FIFO     | 1678                               |
+    | CFS      | （与优先级设置有关）2000-15000不等 |
+
+  - 可以看到本测试中MLFQ对饥饿控制的较好，但这并不是无代价的，与参数的设置有很大关系。
