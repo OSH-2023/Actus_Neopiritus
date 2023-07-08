@@ -70,8 +70,8 @@ fn alloc_fixed_id(&mut self, id: usize) -> AllocResult;
 
 `alloc_fixed_id` 方法的目的是将给定的 `id` 标记为已分配，确保它不会在后续分配中被重用。其设计思路如下：
 
-1. 先调用 `is_allocated` 方法判断 `id` 是否已分配。
-1. 若 `id` 未分配，则检查并处理 `id`：
+1. 先调用 `is_allocated` 方法判断 `id` 是否已分配。若 `id` 已分配，则返回 `AllocResult::Failed`。
+1. 若 `id` 未分配，则分配 `id`，并返回 `AllocResult::Ok`：
     - 如果 `id` 小于 `next_id`，则将其从 `free_ids` 集合中移除。
     - 如果 `id` 大于等于 `next_id`，则需要将 `next_id` 更新为 `id` + 1，以确保后续分配的 ID 不会与 `id` 重复。另外，需要将原 `next_id` 到 `id` - 1 的 ID 加入至 `free_ids` 集合中。
 
