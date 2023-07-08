@@ -29,9 +29,11 @@ fn alloc_id(&mut self, count: usize, align_pow2: usize) -> AllocResult<usize>;
 
 `alloc_id` 方法的目的是分配 `count` 个连续的 ID，并确保第一个 ID 满足对齐要求。其设计思路如下：
 
-1. 参数检查：首先检查输入参数 `count` 和 `align_pow2` 是否合法。它们中的任何一个都不应为 0。
-1. 计算第一个 ID：`base_id` 是第一个可能满足对齐要求的 ID。我们可以将 `next_id` 向上舍入到最接近的 `align_pow2` 的倍数，得到 `base_id`。这可以通过以下公式实现：(`next_id` + `align_pow2` - 1) / `align_pow2` * `align_pow2`。
+1. 参数检查：首先检查输入参数 `count` 是否合法，其不应为 0。此外，`let align = 1 << align_pow2`。
+1. 计算第一个 ID：`base_id` 是第一个可能满足对齐要求的 ID。我们可以将 `next_id` 向上舍入到最接近的 `align` 的倍数，得到 `base_id`。这可以通过以下公式实现：(`next_id` + `align` - 1) / `align` * `align`。
+1. 如果 `base_id` 在超过 ID 的最大范围，则分配失败，返回 `AllocResult::Failed`。
 1. 分配 ID：从 `base_id` 起便是 `count` 个连续的空闲 ID。我们需要将原 `next_id` 到 `base_id` - 1 间的 ID 加入至 `free_ids` 中，以表明它们尚未分配（可以用哈希表实现这个集合，修改/查询时间均为 $O(1)$）。同时，我们需要更新 `next_id` 的值，确保它大于已分配的最大 ID。
+1. 分配成功，返回基址 ID 的值 `AllocResult::Ok(base_id)`。
 
 这种设计方法寻找空闲 ID 时，无需任何循环遍历，这在大多数情况下效率较高。然而，在极端情况下，如果 ID 空间非常分散，这可能导致 `free_ids` 很大，增加哈希表的常数时间。针对这种情况，可以考虑使用更高级的数据结构（如线段树）来加速连续 ID 的搜索和分配过程；但对于一般情况，线段树常数较大，没有较大价值。
 
