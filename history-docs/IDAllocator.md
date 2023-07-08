@@ -18,7 +18,7 @@ ID 分配器（ID Allocator）是一个用于管理唯一标识符（ID）的分
 
 ## ID 分配器实现
 
-在 arceOS 中，ID 分配器源码位于 `crates/allocator/src`。其中 ID 分配器需要实现 6 个功能。
+在 arceOS 中，ID 分配器源码位于 `crates/allocator/src`。其中 ID 分配器需要实现 7 个功能。
 
 ### `alloc_id` 分配 ID
 
