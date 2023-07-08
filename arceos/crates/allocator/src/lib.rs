@@ -15,7 +15,7 @@ mod bitmap;
 mod buddy;
 mod slab;
 
-pub use bitmap::BitmapPageAllocator;
+pub use bitmap::{BitmapPageAllocator, BitmapIdAllocator};
 pub use buddy::BuddyByteAllocator;
 pub use slab::SlabByteAllocator;
 

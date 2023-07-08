@@ -4,7 +4,7 @@
 
 use bitmap_allocator::BitAlloc;
 
-use crate::{AllocError, AllocResult, BaseAllocator, PageAllocator};
+use crate::{AllocError, AllocResult, BaseAllocator, PageAllocator, IdAllocator};
 
 // Support max 1M * 4096 = 4GB memory.
 type BitAllocUsed = bitmap_allocator::BitAlloc1M;
@@ -86,5 +86,51 @@ impl<const PAGE_SIZE: usize> PageAllocator for BitmapPageAllocator<PAGE_SIZE> {
 
     fn available_pages(&self) -> usize {
         self.total_pages - self.used_pages
+    }
+}
+
+
+//Support 2^20 ids
+pub struct BitmapIdAllocator (BitmapPageAllocator<1>);
+
+impl BitmapIdAllocator {
+    pub const fn new() -> Self {
+        Self (BitmapPageAllocator::<1>::new())
+    }
+}
+
+impl BaseAllocator for BitmapIdAllocator {
+    fn init(&mut self, start: usize, size: usize) {
+        self.0.init(start, size)
+    }
+    fn add_memory(&mut self, start: usize, size: usize) -> AllocResult {
+        self.0.add_memory(start, size)
+    }
+}
+
+impl IdAllocator for BitmapIdAllocator {
+    fn alloc_id(&mut self, count: usize, align_pow2: usize) -> AllocResult<usize> {
+        self.0.alloc_pages(count, align_pow2)
+    }
+    fn dealloc_id(&mut self, start_id: usize, count: usize) {
+        self.0.dealloc_pages(start_id, count)
+    }
+    fn size(&self) -> usize {
+        self.0.total_pages()
+    }
+    fn used(&self) -> usize {
+        self.0.used_pages()
+    }
+    fn available(&self) -> usize {
+        self.0.total_pages() - self.0.used_pages()
+    }
+    fn is_allocated(&self, id: usize) -> bool {
+        self.0.inner.test(id)
+    }
+    fn alloc_fixed_id(&mut self, id: usize) -> AllocResult {
+        match self.0.inner.alloc_fixed_bit(id) {
+            Some(_) => Ok(()),
+            None => Err(AllocError::NoMemory)
+        }
     }
 }

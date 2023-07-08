@@ -442,7 +442,6 @@ checksum = "6776fc96284a0bb647b615056fc496d1fe1644a7ab01829818a6d91cae888b84"
 [[package]]
 name = "bitmap-allocator"
 version = "0.1.0"
-source = "git+https://github.com/rcore-os/bitmap-allocator.git?rev=88e871a#88e871a54f28a3d6795478f237466b3332e2fb1d"
 dependencies = [
  "bit_field",
 ]

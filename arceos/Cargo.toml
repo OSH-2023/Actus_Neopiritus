@@ -50,6 +50,7 @@ members = [
     "crates/tuple_for_each",
     "crates/fs_utils",
     "crates/ext2fs",
+    "crates/bitmap_allocator",
 
     "modules/axalloc",
     "modules/axconfig",
