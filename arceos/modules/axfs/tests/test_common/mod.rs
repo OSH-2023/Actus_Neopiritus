@@ -255,7 +255,24 @@ fn test_devfs_ramfs() -> Result<()> {
     Ok(())
 }
 
+fn init_ext2() -> Result<()> {
+    let mut file_long = File::create("long.txt")?;
+    for _ in 0..1000 {
+        file_long.write_all(b"Rust is cool!")?;
+    }
+    File::create("short.txt")?.write_all(b"Rust is cool!")?;
+    fs::create_dir("very/")?;
+    fs::create_dir("very/long/")?;
+    fs::create_dir("very/long/path/")?;
+    File::create("very/long/path/test.txt")?.write_all(b"Rust is cool!")?;
+    fs::create_dir("very-long-dir-name/")?;
+    File::create("very-long-dir-name/very-long-file-name.txt")?.write_all(b"Rust is cool!")?;
+    Ok(())
+}
+
 pub fn test_all() {
+    #[cfg(feature = "ext2fs")]
+    init_ext2().expect("init_ext2() failed");
     test_read_write_file().expect("test_read_write_file() failed");
     test_read_dir().expect("test_read_dir() failed");
     test_file_permission().expect("test_file_permission() failed");

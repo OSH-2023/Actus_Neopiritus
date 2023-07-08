@@ -23,7 +23,7 @@ impl VfsNodeOps for Ext2DirWrapper
 
 测试的方法主要包括以下两种：
 
-利用app/fs/shell进行测试。输入如下命令
+1. 利用app/fs/shell进行测试。输入如下命令
 
 ```shell
 make disk_img
@@ -35,3 +35,24 @@ make A=apps/fs/shell ARCH=riscv64 LOG=debug FS=y run
 ![](src/fs1.PNG)
 
 通过运行这些命令，检查文件系统的正确性。
+
+2. 利用cargo test进行测试
+
+将目录切换到module/axfs/中，执行如下命令：
+
+```
+./resources/create_ext2.sh
+cargo test
+```
+
+得到以下输出说明测试无误：
+
+```
+running 1 test
+test test_fs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+```
+
+
+
