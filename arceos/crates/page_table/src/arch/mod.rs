@@ -6,3 +6,6 @@ pub mod riscv;
 
 #[cfg(any(target_arch = "aarch64", doc))]
 pub mod aarch64;
+
+#[cfg(any(target_arch = "arm", doc))]
+pub mod arm;
